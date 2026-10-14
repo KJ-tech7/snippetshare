@@ -1,0 +1,770 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnippetShare | Dashboard</title>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6fb;
+            color: #202938;
+        }
+
+        header {
+            background: #172554;
+            color: white;
+            padding: 18px 7%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        header h1 { margin: 0; font-size: 25px; }
+        header p { margin: 5px 0 0; color: #cbd5e1; font-size: 14px; }
+
+        .container { width: min(1100px, 92%); margin: 28px auto; }
+
+        .panel {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 3px 14px rgba(0, 0, 0, 0.05);
+        }
+
+        h2 { margin-top: 0; }
+
+        label {
+            display: block;
+            margin: 16px 0 7px;
+            font-weight: bold;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font: inherit;
+            background: white;
+        }
+
+        textarea {
+            min-height: 180px;
+            resize: vertical;
+            font-family: Consolas, monospace;
+        }
+
+        button, .action-link {
+            display: inline-block;
+            border: none;
+            border-radius: 7px;
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .primary { background: #2563eb; color: white; }
+        .secondary { background: #e2e8f0; color: #1e293b; }
+        .danger { background: #fee2e2; color: #991b1b; }
+        .share-button { background: #0f766e; color: white; }
+        .history-button { background: #7c3aed; color: white; }
+        .logout { background: #dc2626; color: white; }
+
+        .form-actions, .card-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-top: 16px;
+        }
+
+        .toolbar {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .snippet-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            gap: 18px;
+        }
+
+        .snippet-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+            min-width: 0;
+        }
+
+        .snippet-card h3 {
+            margin: 0 0 10px;
+            overflow-wrap: anywhere;
+        }
+
+        .language-tag {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1d4ed8;
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+
+        .preview {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 14px;
+            border-radius: 8px;
+            overflow: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            max-height: 220px;
+            font-family: Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .preview code {
+            font-family: inherit;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            background: transparent;
+        }
+
+        .message {
+            margin-top: 14px;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+        .success-text { color: #15803d; }
+        .error-text { color: #b91c1c; }
+        .empty { color: #64748b; padding: 20px 0; }
+        .hidden { display: none !important; }
+
+        .history-panel {
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+
+        .history-panel h4 { margin: 0 0 12px; }
+
+        .version-item {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .version-item p {
+            margin: 5px 0;
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        .version-code {
+            max-height: 180px;
+            overflow: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            padding: 12px;
+            border-radius: 6px;
+            background: #282c34;
+            color: #abb2bf;
+            font: 13px/1.5 Consolas, monospace;
+        }
+
+        @media (max-width: 600px) {
+            .toolbar { grid-template-columns: 1fr; }
+            .panel { padding: 18px; }
+            header { padding: 18px 5%; }
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <div>
+        <h1>SnippetShare</h1>
+        <p>Save, manage and share your code snippets.</p>
+    </div>
+    <button class="logout" id="logoutButton" type="button">Logout</button>
+</header>
+
+<main class="container">
+    <section class="panel" id="editorPanel">
+        <h2 id="formHeading">Create a Snippet</h2>
+
+        <form id="snippetForm">
+            <label for="title">Snippet title</label>
+            <input type="text" id="title" maxlength="200"
+                   placeholder="e.g. Java Hello World" required>
+
+            <label for="language">Programming language</label>
+            <select id="language" required>
+                <option value="">Select a language</option>
+                <option>Java</option>
+                <option>Python</option>
+                <option>JavaScript</option>
+                <option>C</option>
+                <option>C++</option>
+                <option>C#</option>
+                <option>HTML</option>
+                <option>CSS</option>
+                <option>SQL</option>
+                <option>PHP</option>
+                <option>Go</option>
+                <option>Other</option>
+            </select>
+
+            <label for="code">Code</label>
+            <textarea id="code" placeholder="Write or paste your code here..."
+                      required></textarea>
+
+            <div class="form-actions">
+                <button class="primary" id="submitButton" type="submit">
+                    Save Snippet
+                </button>
+                <button class="secondary hidden" id="cancelEditButton"
+                        type="button">Cancel Edit</button>
+            </div>
+
+            <p id="formMessage" class="message" role="status"></p>
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2>Your Snippets</h2>
+
+        <div class="toolbar">
+            <input type="search" id="searchInput"
+                   placeholder="Search snippets by title or code..."
+                   aria-label="Search snippets">
+
+            <select id="filterLanguage" aria-label="Filter by language">
+                <option value="">All languages</option>
+                <option>Java</option>
+                <option>Python</option>
+                <option>JavaScript</option>
+                <option>C</option>
+                <option>C++</option>
+                <option>C#</option>
+                <option>HTML</option>
+                <option>CSS</option>
+                <option>SQL</option>
+                <option>PHP</option>
+                <option>Go</option>
+                <option>Other</option>
+            </select>
+        </div>
+
+        <p id="listMessage" class="message" role="status"></p>
+        <div id="snippetList" class="snippet-list"></div>
+    </section>
+</main>
+
+<script>
+    const snippetForm = document.getElementById("snippetForm");
+    const titleInput = document.getElementById("title");
+    const languageInput = document.getElementById("language");
+    const codeInput = document.getElementById("code");
+    const formHeading = document.getElementById("formHeading");
+    const submitButton = document.getElementById("submitButton");
+    const cancelEditButton = document.getElementById("cancelEditButton");
+    const formMessage = document.getElementById("formMessage");
+    const listMessage = document.getElementById("listMessage");
+    const snippetList = document.getElementById("snippetList");
+    const searchInput = document.getElementById("searchInput");
+    const filterLanguage = document.getElementById("filterLanguage");
+    const logoutButton = document.getElementById("logoutButton");
+
+    let snippets = [];
+    let editingSnippetId = null;
+
+    const languageMap = {
+        "Java": "java",
+        "Python": "python",
+        "JavaScript": "javascript",
+        "C": "c",
+        "C++": "cpp",
+        "C#": "csharp",
+        "HTML": "html",
+        "CSS": "css",
+        "SQL": "sql",
+        "PHP": "php",
+        "Go": "go"
+    };
+
+    async function request(url, options = {}) {
+        const response = await fetch(url, {
+            credentials: "same-origin",
+            ...options
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            window.location.href = "/login.html";
+            throw new Error("Your session has expired. Please log in again.");
+        }
+
+        if (!response.ok) {
+            const details = await response.text();
+            throw new Error(details || `Request failed: ${response.status}`);
+        }
+
+        if (response.status === 204) return null;
+        return response.json();
+    }
+
+    function showMessage(element, message, isError = false) {
+        element.textContent = message;
+        element.className = "message " +
+            (message ? (isError ? "error-text" : "success-text") : "");
+    }
+
+    function resetEditor() {
+        editingSnippetId = null;
+        snippetForm.reset();
+        formHeading.textContent = "Create a Snippet";
+        submitButton.textContent = "Save Snippet";
+        cancelEditButton.classList.add("hidden");
+        showMessage(formMessage, "");
+    }
+
+    function startEditing(snippet) {
+        editingSnippetId = snippet.id;
+        titleInput.value = snippet.title || "";
+        languageInput.value = snippet.language || "";
+        codeInput.value = snippet.code || "";
+
+        formHeading.textContent = "Edit Snippet";
+        submitButton.textContent = "Update Snippet";
+        cancelEditButton.classList.remove("hidden");
+        showMessage(formMessage, "Editing: " + snippet.title);
+
+        document.getElementById("editorPanel").scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+        titleInput.focus();
+    }
+
+    snippetForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const isEditing = editingSnippetId !== null;
+        const url = isEditing
+            ? "/api/snippets/" + encodeURIComponent(editingSnippetId)
+            : "/api/snippets";
+
+        const payload = {
+            title: titleInput.value.trim(),
+            language: languageInput.value,
+            code: codeInput.value
+        };
+
+        if (!payload.title || !payload.language || !payload.code.trim()) {
+            showMessage(formMessage, "Please fill in all fields.", true);
+            return;
+        }
+
+        submitButton.disabled = true;
+
+        try {
+            await request(url, {
+                method: isEditing ? "PUT" : "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            resetEditor();
+            showMessage(formMessage, isEditing
+                ? "Snippet updated successfully!"
+                : "Snippet saved successfully!");
+
+            await loadSnippets();
+        } catch (error) {
+            showMessage(formMessage, error.message, true);
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+
+    cancelEditButton.addEventListener("click", resetEditor);
+
+    async function shareSnippet(snippet) {
+        try {
+            const result = await request(
+                "/api/snippets/" + encodeURIComponent(snippet.id) + "/share",
+                { method: "POST" }
+            );
+
+            const shareUrl = window.location.origin +
+                "/shared.html?token=" + encodeURIComponent(result.token);
+
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                showMessage(listMessage,
+                    "Share link copied! You can now send it to anyone.");
+            } catch (clipboardError) {
+                window.prompt("Copy this sharing link:", shareUrl);
+                showMessage(listMessage,
+                    "Your sharing link is ready. Copy it from the dialog.");
+            }
+        } catch (error) {
+            showMessage(listMessage, error.message, true);
+        }
+    }
+
+    async function revokeShareLink(snippet) {
+        const confirmed = window.confirm(
+            "Revoke the sharing link for \"" + snippet.title +
+            "\"? Anyone using the old link will lose access."
+        );
+
+        if (!confirmed) return;
+
+        try {
+            await request(
+                "/api/snippets/" + encodeURIComponent(snippet.id) + "/share",
+                { method: "DELETE" }
+            );
+
+            showMessage(listMessage,
+                "Sharing link revoked. Create a new link whenever you want.");
+        } catch (error) {
+            showMessage(listMessage, error.message, true);
+        }
+    }
+
+    function highlightCode(codeElement, languageClass) {
+        if (!window.hljs) return;
+
+        try {
+            if (languageClass && hljs.getLanguage(languageClass)) {
+                codeElement.classList.add("language-" + languageClass);
+            }
+            hljs.highlightElement(codeElement);
+        } catch (error) {
+            console.error("Syntax highlighting failed:", error);
+        }
+    }
+
+    async function showHistory(snippet, historyPanel, historyButton) {
+        historyButton.disabled = true;
+        historyPanel.replaceChildren();
+
+        const heading = document.createElement("h4");
+        heading.textContent = "Version History";
+        historyPanel.appendChild(heading);
+
+        const loading = document.createElement("p");
+        loading.textContent = "Loading previous versions...";
+        historyPanel.appendChild(loading);
+
+        historyPanel.classList.remove("hidden");
+
+        try {
+            const versions = await request(
+                "/api/snippets/" + encodeURIComponent(snippet.id) + "/versions"
+            );
+
+            historyPanel.replaceChildren();
+            historyPanel.appendChild(heading);
+
+            if (!versions || versions.length === 0) {
+                const empty = document.createElement("p");
+                empty.className = "empty";
+                empty.textContent =
+                    "No previous versions yet. Edit and save this snippet to create one.";
+                historyPanel.appendChild(empty);
+                return;
+            }
+
+            versions.forEach(function (version, index) {
+                const item = document.createElement("div");
+                item.className = "version-item";
+
+                const versionTitle = document.createElement("strong");
+                versionTitle.textContent =
+                    "Previous version " + (versions.length - index);
+
+                const title = document.createElement("p");
+                title.textContent = "Title: " + (version.title || "Untitled");
+
+                const language = document.createElement("p");
+                language.textContent =
+                    "Language: " + (version.language || "Unknown");
+
+                const savedAt = document.createElement("p");
+                const date = version.savedAt
+                    ? new Date(version.savedAt).toLocaleString()
+                    : "Unknown";
+                savedAt.textContent = "Saved: " + date;
+
+                const code = document.createElement("pre");
+                code.className = "version-code";
+
+                const codeElement = document.createElement("code");
+                codeElement.textContent = version.code || "";
+
+                const languageClass = languageMap[version.language];
+                if (languageClass) {
+                    codeElement.classList.add("language-" + languageClass);
+                }
+
+                code.appendChild(codeElement);
+                highlightCode(codeElement, languageClass);
+
+                const copyButton = document.createElement("button");
+                copyButton.type = "button";
+                copyButton.className = "secondary";
+                copyButton.textContent = "Copy This Version";
+
+                copyButton.addEventListener("click", async function () {
+                    try {
+                        await navigator.clipboard.writeText(version.code || "");
+                        showMessage(listMessage,
+                            "Previous version copied to clipboard.");
+                    } catch (error) {
+                        window.prompt("Copy this previous version:", version.code || "");
+                    }
+                });
+
+                item.append(
+                    versionTitle,
+                    title,
+                    language,
+                    savedAt,
+                    code,
+                    copyButton
+                );
+
+                historyPanel.appendChild(item);
+            });
+        } catch (error) {
+            historyPanel.replaceChildren();
+            const headingError = document.createElement("h4");
+            headingError.textContent = "Version History";
+
+            const errorMessage = document.createElement("p");
+            errorMessage.className = "error-text";
+            errorMessage.textContent =
+                "Could not load history: " + error.message;
+
+            historyPanel.append(headingError, errorMessage);
+        } finally {
+            historyButton.disabled = false;
+        }
+    }
+
+    function renderSnippets() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const selectedLanguage = filterLanguage.value;
+
+        const filteredSnippets = snippets.filter(function (snippet) {
+            const title = (snippet.title || "").toLowerCase();
+            const code = (snippet.code || "").toLowerCase();
+            const language = snippet.language || "";
+
+            return (title.includes(searchTerm) || code.includes(searchTerm)) &&
+                (!selectedLanguage || language === selectedLanguage);
+        });
+
+        snippetList.replaceChildren();
+
+        if (filteredSnippets.length === 0) {
+            const empty = document.createElement("p");
+            empty.className = "empty";
+            empty.textContent = snippets.length === 0
+                ? "You haven't created any snippets yet."
+                : "No snippets match your search or language filter.";
+            snippetList.appendChild(empty);
+            return;
+        }
+
+        filteredSnippets.forEach(function (snippet) {
+            const card = document.createElement("article");
+            card.className = "snippet-card";
+
+            const heading = document.createElement("h3");
+            heading.textContent = snippet.title || "Untitled snippet";
+
+            const language = document.createElement("span");
+            language.className = "language-tag";
+            language.textContent = snippet.language || "Unknown";
+
+            const preview = document.createElement("pre");
+            preview.className = "preview";
+
+            const codeElement = document.createElement("code");
+            const languageClass = languageMap[snippet.language];
+
+            codeElement.textContent = snippet.code || "";
+            preview.appendChild(codeElement);
+            highlightCode(codeElement, languageClass);
+
+            const actions = document.createElement("div");
+            actions.className = "card-actions";
+
+            const editButton = document.createElement("button");
+            editButton.className = "primary";
+            editButton.type = "button";
+            editButton.textContent = "Edit";
+            editButton.addEventListener("click", function () {
+                startEditing(snippet);
+            });
+
+            const copyButton = document.createElement("button");
+            copyButton.className = "secondary";
+            copyButton.type = "button";
+            copyButton.textContent = "Copy";
+            copyButton.addEventListener("click", async function () {
+                try {
+                    await navigator.clipboard.writeText(snippet.code || "");
+                    showMessage(listMessage, "Code copied to clipboard.");
+                } catch (error) {
+                    showMessage(listMessage,
+                        "Copy failed. Try copying the code manually.", true);
+                }
+            });
+
+            const openLink = document.createElement("a");
+            openLink.className = "action-link secondary";
+            openLink.textContent = "Open";
+            openLink.href = "/snippet.html?id=" +
+                encodeURIComponent(snippet.id);
+
+            const shareButton = document.createElement("button");
+            shareButton.className = "share-button";
+            shareButton.type = "button";
+            shareButton.textContent = "Share";
+            shareButton.addEventListener("click", function () {
+                shareSnippet(snippet);
+            });
+
+            const revokeButton = document.createElement("button");
+            revokeButton.className = "secondary";
+            revokeButton.type = "button";
+            revokeButton.textContent = "Revoke Link";
+            revokeButton.addEventListener("click", function () {
+                revokeShareLink(snippet);
+            });
+
+            const historyButton = document.createElement("button");
+            historyButton.className = "history-button";
+            historyButton.type = "button";
+            historyButton.textContent = "View History";
+
+            const historyPanel = document.createElement("div");
+            historyPanel.className = "history-panel hidden";
+
+            historyButton.addEventListener("click", function () {
+                if (!historyPanel.classList.contains("hidden")) {
+                    historyPanel.classList.add("hidden");
+                    return;
+                }
+
+                showHistory(snippet, historyPanel, historyButton);
+            });
+
+            const deleteButton = document.createElement("button");
+            deleteButton.className = "danger";
+            deleteButton.type = "button";
+            deleteButton.textContent = "Delete";
+            deleteButton.addEventListener("click", async function () {
+                if (!window.confirm(
+                    'Delete "' + (snippet.title || "this snippet") + '"?'
+                )) return;
+
+                deleteButton.disabled = true;
+
+                try {
+                    await request(
+                        "/api/snippets/" + encodeURIComponent(snippet.id),
+                        { method: "DELETE" }
+                    );
+
+                    if (String(editingSnippetId) === String(snippet.id)) {
+                        resetEditor();
+                    }
+
+                    showMessage(listMessage, "Snippet deleted successfully.");
+                    await loadSnippets();
+                } catch (error) {
+                    showMessage(listMessage, error.message, true);
+                    deleteButton.disabled = false;
+                }
+            });
+
+            actions.append(
+                editButton,
+                copyButton,
+                openLink,
+                shareButton,
+                revokeButton,
+                historyButton,
+                deleteButton
+            );
+
+            card.append(heading, language, preview, actions, historyPanel);
+            snippetList.appendChild(card);
+        });
+    }
+
+    async function loadSnippets() {
+        showMessage(listMessage, "Loading snippets...");
+
+        try {
+            snippets = await request("/api/snippets");
+            renderSnippets();
+            showMessage(listMessage, "");
+        } catch (error) {
+            showMessage(listMessage, error.message, true);
+        }
+    }
+
+    searchInput.addEventListener("input", renderSnippets);
+    filterLanguage.addEventListener("change", renderSnippets);
+
+    logoutButton.addEventListener("click", async function () {
+        logoutButton.disabled = true;
+
+        try {
+            await request("/api/auth/logout", { method: "POST" });
+        } catch (error) {
+            // Continue to login even if the session has expired.
+        }
+
+        window.location.replace("/login.html");
+    });
+
+    loadSnippets();
+</script>
+</body>
+</html>

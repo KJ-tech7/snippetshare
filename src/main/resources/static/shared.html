@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Snippet | SnippetShare</title>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            background: #f4f6fb;
+            color: #202938;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            width: min(850px, 100%);
+            margin: 30px auto;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 26px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+        }
+
+        h1 { margin-top: 0; overflow-wrap: anywhere; }
+
+        .brand {
+            color: #2563eb;
+            font-weight: bold;
+            margin-bottom: 24px;
+        }
+
+        .language {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 20px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 13px;
+        }
+
+        pre {
+            background: #282c34;
+            padding: 18px;
+            border-radius: 9px;
+            overflow: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            line-height: 1.6;
+        }
+
+        code {
+            font-family: Consolas, monospace;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        button, a {
+            display: inline-block;
+            border: none;
+            border-radius: 7px;
+            padding: 11px 15px;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+        }
+
+        a {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .message {
+            color: #64748b;
+            overflow-wrap: anywhere;
+        }
+
+        .error { color: #b91c1c; }
+
+        @media (max-width: 500px) {
+            body { padding: 12px; }
+            .panel { padding: 18px; }
+        }
+    </style>
+</head>
+
+<body>
+<main class="container">
+    <div class="brand">SnippetShare</div>
+
+    <section class="panel">
+        <p id="status" class="message">Loading shared snippet...</p>
+
+        <div id="snippetContent" hidden>
+            <h1 id="snippetTitle"></h1>
+            <p><span class="language" id="snippetLanguage"></span></p>
+
+            <pre><code id="snippetCode"></code></pre>
+
+            <div class="actions">
+                <button id="copyButton" type="button">Copy Code</button>
+                <a href="/login.html">Sign in to SnippetShare</a>
+            </div>
+
+            <p id="copyMessage" class="message" role="status"></p>
+        </div>
+    </section>
+</main>
+
+<script>
+    const statusElement = document.getElementById("status");
+    const contentElement = document.getElementById("snippetContent");
+    const titleElement = document.getElementById("snippetTitle");
+    const languageElement = document.getElementById("snippetLanguage");
+    const codeElement = document.getElementById("snippetCode");
+    const copyButton = document.getElementById("copyButton");
+    const copyMessage = document.getElementById("copyMessage");
+
+    const languageMap = {
+        "Java": "java",
+        "Python": "python",
+        "JavaScript": "javascript",
+        "C": "c",
+        "C++": "cpp",
+        "C#": "csharp",
+        "HTML": "html",
+        "CSS": "css",
+        "SQL": "sql",
+        "PHP": "php",
+        "Go": "go"
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+
+    async function loadSharedSnippet() {
+        if (!token) {
+            statusElement.textContent =
+                "No sharing token was provided in this link.";
+            statusElement.classList.add("error");
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                "/api/public/snippets/" + encodeURIComponent(token)
+            );
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error(
+                        "This sharing link is invalid or has been revoked."
+                    );
+                }
+                throw new Error("Unable to load the shared snippet.");
+            }
+
+            const snippet = await response.json();
+
+            titleElement.textContent = snippet.title || "Untitled snippet";
+            languageElement.textContent = snippet.language || "Unknown";
+            codeElement.textContent = snippet.code || "";
+
+            const languageClass = languageMap[snippet.language];
+
+            if (languageClass && window.hljs &&
+                hljs.getLanguage(languageClass)) {
+                codeElement.classList.add("language-" + languageClass);
+            }
+
+            if (window.hljs) {
+                hljs.highlightElement(codeElement);
+            }
+
+            statusElement.hidden = true;
+            contentElement.hidden = false;
+            document.title =
+                (snippet.title || "Shared Snippet") + " | SnippetShare";
+        } catch (error) {
+            statusElement.textContent = error.message;
+            statusElement.classList.add("error");
+        }
+    }
+
+    copyButton.addEventListener("click", async function () {
+        try {
+            await navigator.clipboard.writeText(codeElement.textContent);
+            copyMessage.textContent = "Code copied to clipboard!";
+            copyMessage.classList.remove("error");
+        } catch (error) {
+            copyMessage.textContent =
+                "Copy failed. Select the code and copy it manually.";
+            copyMessage.classList.add("error");
+        }
+    });
+
+    loadSharedSnippet();
+</script>
+</body>
+</html>
